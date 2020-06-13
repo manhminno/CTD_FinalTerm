@@ -1,0 +1,16 @@
+Program Example2; (* Factorial *)
+   
+Var n : Integer;
+
+Function F(n : Integer) : Integer;
+  Begin
+    If n = 0 Then F := 1 Else F := N * F (N - 1);
+  End;
+
+Begin
+  For n := 1 To 4 Do
+    Begin
+      Call WriteLn;
+      Call WriteI( n ** (n + 2));
+    End;
+End. (* Factorial *)
