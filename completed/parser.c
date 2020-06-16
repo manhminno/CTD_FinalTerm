@@ -13,6 +13,7 @@
 #include "error.h"
 #include "debug.h"
 #include "codegen.h"
+#define MAX_CASE 10     // TODO:2
 
 Token *currentToken;
 Token *lookAhead;
@@ -252,21 +253,21 @@ ConstantValue* compileConstant2(void) {
   Object* obj;
 
   switch (lookAhead->tokenType) {
-  case TK_NUMBER:
-    eat(TK_NUMBER);
-    constValue = makeIntConstant(currentToken->value);
-    break;
-  case TK_IDENT:
-    eat(TK_IDENT);
-    obj = checkDeclaredConstant(currentToken->string);
-    if (obj->constAttrs->value->type == TP_INT)
-      constValue = duplicateConstantValue(obj->constAttrs->value);
-    else
-      error(ERR_UNDECLARED_INT_CONSTANT,currentToken->lineNo, currentToken->colNo);
-    break;
-  default:
-    error(ERR_INVALID_CONSTANT, lookAhead->lineNo, lookAhead->colNo);
-    break;
+    case TK_NUMBER:
+      eat(TK_NUMBER);
+      constValue = makeIntConstant(currentToken->value);
+      break;
+    case TK_IDENT:
+      eat(TK_IDENT);
+      obj = checkDeclaredConstant(currentToken->string);
+      if (obj->constAttrs->value->type == TP_INT)
+        constValue = duplicateConstantValue(obj->constAttrs->value);
+      else
+        error(ERR_UNDECLARED_INT_CONSTANT,currentToken->lineNo, currentToken->colNo);
+      break;
+    default:
+      error(ERR_INVALID_CONSTANT, lookAhead->lineNo, lookAhead->colNo);
+      break;
   }
   return constValue;
 }
@@ -370,31 +371,37 @@ void compileStatements(void) {
 
 void compileStatement(void) {
   switch (lookAhead->tokenType) {
-  case TK_IDENT:
-    compileAssignSt();
-    break;
-  case KW_CALL:
-    compileCallSt();
-    break;
-  case KW_BEGIN:
-    compileGroupSt();
-    break;
-  case KW_IF:
-    compileIfSt();
-    break;
-  case KW_WHILE:
-    compileWhileSt();
-    break;
-  case KW_FOR:
-    compileForSt();
-    break;
-  case SB_SEMICOLON:
-  case KW_END:
-  case KW_ELSE:
-    break;
-  default:
-    error(ERR_INVALID_STATEMENT, lookAhead->lineNo, lookAhead->colNo);
-    break;
+    case TK_IDENT:
+      compileAssignSt();
+      break;
+    case KW_CALL:
+      compileCallSt();
+      break;
+    case KW_BEGIN:
+      compileGroupSt();
+      break;
+    case KW_IF:
+      compileIfSt();
+      break;
+    case KW_WHILE:
+      compileWhileSt();
+      break;
+    case KW_FOR:
+      compileForSt();
+      break;
+    case KW_SWITCH:           // TODO:2
+      compileSwitchSt();
+      break;
+    case KW_BREAK:            // TODO:2
+    case KW_CASE:             // TODO:2
+    case KW_DEFAULT:          // TODO:2
+    case SB_SEMICOLON:
+    case KW_END:
+    case KW_ELSE:
+      break;
+    default:
+      error(ERR_INVALID_STATEMENT, lookAhead->lineNo, lookAhead->colNo);
+      break;
   }
 }
 
@@ -407,27 +414,27 @@ Type* compileLValue(void) {
   var = checkDeclaredLValueIdent(currentToken->string);
 
   switch (var->kind) {
-  case OBJ_VARIABLE:
-    genVariableAddress(var);
+    case OBJ_VARIABLE:
+      genVariableAddress(var);
 
-    if (var->varAttrs->type->typeClass == TP_ARRAY) {
-      varType = compileIndexes(var->varAttrs->type);
-    } else
-      varType = var->varAttrs->type;
-    break;
-  case OBJ_PARAMETER:
-    if (var->paramAttrs->kind == PARAM_VALUE)
-      genParameterAddress(var);
-    else genParameterValue(var);
+      if (var->varAttrs->type->typeClass == TP_ARRAY) {
+        varType = compileIndexes(var->varAttrs->type);
+      } else
+        varType = var->varAttrs->type;
+      break;
+    case OBJ_PARAMETER:
+      if (var->paramAttrs->kind == PARAM_VALUE)
+        genParameterAddress(var);
+      else genParameterValue(var);
 
-    varType = var->paramAttrs->type;
-    break;
-  case OBJ_FUNCTION:
-    genReturnValueAddress(var);
-    varType = var->funcAttrs->returnType;
-    break;
-  default: 
-    error(ERR_INVALID_LVALUE,currentToken->lineNo, currentToken->colNo);
+      varType = var->paramAttrs->type;
+      break;
+    case OBJ_FUNCTION:
+      genReturnValueAddress(var);
+      varType = var->funcAttrs->returnType;
+      break;
+    default: 
+      error(ERR_INVALID_LVALUE,currentToken->lineNo, currentToken->colNo);
   }
 
   return varType;
@@ -549,6 +556,66 @@ void compileForSt(void) {
   updateFJ(fjInstruction, getCurrentCodeAddress());
   genDCT(1);
 
+}
+
+//TODO:2
+void compileSwitchSt(void ) {
+  Instruction* fjInstruction;
+  Instruction* jInstructions[MAX_CASE];
+  Type* type;
+  int count = 0;
+
+  eat(KW_SWITCH);
+  type = compileExpression();
+  eat(KW_BEGIN);
+  
+  while(lookAhead->tokenType != KW_END) {
+    genCV();
+    switch(lookAhead->tokenType) {
+      case KW_CASE:
+        eat(KW_CASE);
+        switch (lookAhead->tokenType) {
+          case TK_NUMBER:
+            eat(TK_NUMBER);
+            checkIntType(type);
+            genLC(currentToken->value);
+            break;
+          case TK_CHAR:
+            eat(TK_CHAR);
+            checkCharType(type);
+            genLC(currentToken->value);
+            break;
+          default:
+            error(ERR_INVALID_CONSTANT, lookAhead->lineNo, lookAhead->colNo);
+        }
+        // genEQ
+        genEQ();
+        // genFJ
+        fjInstruction = genFJ(DC_VALUE);
+        eat(SB_COLON);
+        compileStatements();
+        if(lookAhead->tokenType == KW_BREAK) {
+          eat(KW_BREAK);
+          jInstructions[count] = genJ(DC_VALUE);
+          count++;
+        }
+        updateFJ(fjInstruction, getCurrentCodeAddress());
+        break;
+      case KW_DEFAULT:
+        eat(KW_DEFAULT);
+        eat(SB_COLON);
+        compileStatements();
+        break;
+      default:
+        // Error message
+        error(ERR_INVALID_STATEMENT, lookAhead->lineNo, lookAhead->colNo);
+        break;
+    }
+  }
+  for(int i = 0; i < count; i++) {
+    updateJ(jInstructions[i], getCurrentCodeAddress());
+  }
+  eat(KW_END);
 }
 
 void compileArgument(Object* param) {
@@ -745,6 +812,10 @@ Type* compileExpression3(Type* argType1) {
     case KW_END:
     case KW_ELSE:
     case KW_THEN:
+    case KW_BREAK:      // TODO:2
+    case KW_CASE:       // TODO:2
+    case KW_DEFAULT:    // TODO:2
+    case KW_BEGIN:      // TODO:2
       resultType = argType1;
       break;
     default:
@@ -814,6 +885,10 @@ Type* compileTerm2(Type* argType1) {
     case KW_END:
     case KW_ELSE:
     case KW_THEN:
+    case KW_BREAK:      // TODO:2
+    case KW_CASE:       // TODO:2
+    case KW_DEFAULT:    // TODO:2
+    case KW_BEGIN:      // TODO:2
       resultType = argType1;
       break;
     default:

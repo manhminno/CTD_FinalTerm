@@ -95,7 +95,7 @@ int run(void) {
   while (ps == PS_ACTIVE) {
     if (debugMode) {
       sprintInstruction(s,&(code[pc]));
-      wprintw(win, "%6d-%-4d:  %s\n",count++,pc,s);
+      wprintw(win, "%6d-%-4d:  %s - Vi tri stack: %d | Gia tri stack: %d ~ %d ~ %d\n",count++,pc,s, t, stack[t-1], stack[t], stack[t+1]);   // TODO:2
     }
 
     switch (code[pc].op) {
@@ -130,7 +130,7 @@ int run(void) {
         break;
       case OP_FJ: 
         if (stack[t] == FALSE) 
-        pc = code[pc].q - 1;
+          pc = code[pc].q - 1;
         t --;
         checkStack();
         break;

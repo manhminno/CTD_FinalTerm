@@ -41,10 +41,11 @@ $ ./kplrun ../tests/ex2
 
 Make lại file chạy kplrun => Chạy file binary ex2 vừa tạo ra để xem kết quả.
 
-#### Bai 1: TODO:1
+#### Bài 1: Thêm hàm mũ vào văn phạm.
+Code TODO:1  => Code ở branch: feauture/bai1
 
 token.h 
-- Thêm SB_EXP vào tokenType
+- Thêm SB_EXP vào enum TokenType
 
 token.c
 - Thêm case SB_EXP vào tokenToString()
@@ -74,6 +75,89 @@ vm.c
 - Thêm thư viện #include <math.h> => Tính hàm mũ
 - Thêm case OP_EXP vào hàm run()  => Xử lý tính toán trong stack
 
+#### Bài 2: Thêm switch case vào văn phạm.
+Code TODO:2   => Code ở branch feature/bai2
 
+token.h 
+- Thêm KW_SWITCH, KW_CASE, KW_DEFAULT, KW_BREAK vào enum TokenType
+- Sửa lại KEYWORDS_COUNT = 24 => Thêm 4 keyword mới vào Token 
 
+token.c
+- Thêm các keyword mới vào struct keywords[] 
+- Thêm case của keyword  vào tokenToString()
+
+scanner.c
+- Thêm case của keyword mới vào printToken();
+
+parser.h
+- Thêm định nghĩa hàm compileSwitchSt();
+
+parser.c
+- #define MAX_CASE 10  để  tạo các jInstruction trong hàm case.
+- Thêm case KW_SWITCH vào complileStatement => Đọc thêm văn phạm mới.
+- Thêm case KW_BREAK, KW_DEFAULT, KW_CASE vào compileStatement() => Follow của compileStatement(); (Sau khi compileStatement thì nó sẽ gặp những case này thì sẽ bỏ qua không xử lý Statement).
+- Thêm case KW_BREAK, KW_DEFAULT, KW_CASE, KW_BEGIN vào hàm compileExpression3() và hàm compileTerm2()=> Follow của hàm compileExpression(); Sau khi compileExpression() ở switch thì nó sẽ gặp những case này cần bỏ qua.
+- Viết thêm hàm compileSwitchSt();
+```C
+void compileSwitchSt(void ) {
+  Instruction* fjInstruction;
+  Instruction* jInstructions[MAX_CASE];
+  Type* type;
+  int count = 0;
+
+  eat(KW_SWITCH);                                   // Ăn KW_SWITCH
+  type = compileExpression();                       // compileExpression() => Đẩy giá trị của biến lên trong switch lên đầu stack
+  eat(KW_BEGIN);                                    // Ăn KW_BEGIN 
+  
+  while(lookAhead->tokenType != KW_END) {           
+    genCV();                                        // Duplicate giá trị biến vừa đẩy lên stack                           
+    switch(lookAhead->tokenType) {                  // Check KW_CASE hay là KW_DEFAULT
+      case KW_CASE:
+        eat(KW_CASE);
+        switch (lookAhead->tokenType) {
+          case TK_NUMBER:
+            eat(TK_NUMBER);
+            checkIntType(type);
+            genLC(currentToken->value);             // Load giá trị của constant lên đầu stack
+            break;
+          case TK_CHAR:
+            eat(TK_CHAR);
+            checkCharType(type);
+            genLC(currentToken->value);             // Load giá trị của constant lên đầu stack
+            break;
+          default:
+            error(ERR_INVALID_CONSTANT, lookAhead->lineNo, lookAhead->colNo);
+        }
+        // genEQ()  => So sánh 2 giá trị trên cùng của stack 
+        genEQ();                                    
+        // Tạo 1 False Jump nếu đúng thì thực hiện tiếp còn ko thì nhảy đến vị trí được updateFJ();
+        Instruction* fjInstruction = genFJ(DC_VALUE);       
+        eat(SB_COLON);
+        compileStatements();
+        if(lookAhead->tokenType == KW_BREAK) {
+          eat(KW_BREAK);
+          // Tạo 1 Jump nếu như code trong case đó được thực hiện và gặp KW_BREAK thì nhảy ra ngoài switch-case bằng cách updateJ() ngoài switch-case
+          jInstructions[count] = genJ(DC_VALUE);            
+          count++;
+        }
+        // Nếu FJ trả về false thì sẽ nhảy đến đây.
+        updateFJ(fjInstruction, getCurrentCodeAddress());       
+        break;
+      case KW_DEFAULT:
+        eat(KW_DEFAULT);
+        eat(SB_COLON);
+        compileStatements();
+        break;
+      default:
+        error(ERR_INVALID_STATEMENT, lookAhead->lineNo, lookAhead->colNo);
+        break;
+    }
+  } 
+  // Update tất cả các hàm J để sau khi tính toán gặp KW_sBREAK thì sẽ nhảy ra đây
+  for(int i = 0; i < count; i++) {
+    updateJ(jInstructions[i], getCurrentCodeAddress());
+  }
+  eat(KW_END);              // Ăn KW_END 
+}
+```
 

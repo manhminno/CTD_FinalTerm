@@ -1,13 +1,27 @@
 Program Example2; (* Factorial *)
    
 Var n : Integer;
-
+    y : Integer;
+    m : Integer;
+(*    
 Function F(n : Integer) : Integer;
   Begin
     If n = 0 Then F := 1 Else F := N * F (N - 1);
   End;
-
+*)
 Begin
+  
+  m := 2;
+  y := 4;
+  SWITCH m
+  Begin 
+    CASE 1 : y := 100; BREAK
+    CASE 2 : y := 10; BREAK
+    CASE 3 : y := 3; 
+    DEFAULT: y := 101;
+  End; 
+  Call WriteI(y);
+
   For n := 1 To 4 Do
     Begin
       Call WriteLn;
