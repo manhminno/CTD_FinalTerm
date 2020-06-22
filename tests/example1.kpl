@@ -1,3 +1,13 @@
-Program Example1; (* Example 1 *)
+Program Example1;
+
+var n : Integer;
+
+Function F(n : Integer) : Integer;
+  Begin
+    If n = 0 Then F := 1 Else F := N * F (N - 1);
+  End;
+
 Begin
-End. (* Example 1 *)
+    n := readi;
+    call writei(F(n));
+End.

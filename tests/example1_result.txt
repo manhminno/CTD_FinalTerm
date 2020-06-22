@@ -1,0 +1,32 @@
+0:  J 22        => Nhay den chuong trinh chinh o vi tri 22
+1:  J 2         => Nhay den 2, bo qua cac ham va thu tuc cuc bo khac
+2:  INT 5       => Load 5 frame trong stack: 4 (RV,DL,RA,SL) + 1 frame luu bien cuc bo i
+3:  LV 0,4      => Load gia tri cua bien i
+4:  LC 0        => Load gia tri cua hang so 0
+5:  EQ          => So sanh i voi 0 => Tra ve 0/1 len dau thanh ghi
+6:  FJ 11       => False Jump, kiem tra dau thanh ghi neu 0 thi nhay den 11, nguoc lai tiep tuc thuc hien
+7:  LA 0,0      => Load dia chi function
+8:  LC 1        => Load constant 0
+9:  ST          => Store F = 0
+10: J 21        => Nhay den 21 sau khi gan F = 0
+11: LA 0,0      => Load dia chi cua F
+12: LV 0,4      => Load gia tri cua bien i
+13: INT 4       => Tang gia tri thanh ghi t len 4 (bo qua RV,DL,RA,SL)
+14: LV 0,4      => Load gia tri cua i
+15: LC 1        => Load gia tri constant 1
+16: SB          => Tinh i - 1
+17: DCT 5       => Giam thanh ghi xuong 4 + k 
+18: CALL 1,1    => Goi lai ham o vi tri base(1) + 1 = 2 
+19: ML          => Nhan 2 gia tri tren dinh stack (i, F(i -1))
+20: ST          => Luu gia tri tren dinh stack cho F
+21: EF          => Thoat khoi function, sau khi thoat khoi tu tro ve vi tri goi ham
+22: INT 5       => Tang 5 frame trong stack 4 (RV,DL,RA,SL) + 1 frame luu bien toan cuc n
+23: LA 0,4      => Load dia chi cua bien n
+24: RI          => Doc gia tri int tu ban phim nhap vao
+25: ST          => Ghi gia tri vao s[s[t]] (phep gan)
+26: INT 4       => Tang gia tri thanh ghi t len 4 (bo qua RV,DL,RA,SL)
+27: LV 0,4      => Load gia tri cua bien n
+28: DCT 5       => Giam gia tri thanh ghi t xuong 4 + k (5). Trong do k la so tham so cua ham, thu tuc
+29: CALL 0,1    => Di chuyen den vi tri base(0) + 1
+30: WRI         => Viet ket qua tinh duoc tu function ra man hinh
+31: HL          => 
