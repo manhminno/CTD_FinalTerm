@@ -1,0 +1,20 @@
+Program Fibonacci; 
+Var a: integer;
+   
+Function F ( n: integer) :integer;
+    var i: integer;
+    Begin
+        
+        For i:=0 to n do
+
+        Begin
+            If n=2 Then F:=1 ;
+            If n=1 Then F:=0 ;
+            If n>2 Then F:=F(n-1)+F(n-2);
+        End;
+    End; 
+
+Begin
+    a:=ReadI;
+    Call WriteI( F(a));
+End. 
