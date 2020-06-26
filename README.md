@@ -7,11 +7,6 @@
 
 <b>Lớp</b>: CNTT Việt Nhật - ĐH Bách Khoa Hà Nội.
 
-### Đề Thi 
-<div style="text-align: center">
-<img src='./final_exam.jpg'>
-</div>
-
 ### Cách làm 
 Trong các file có mã TODO theo bài -> Search theo TODO
 ### Cách chạy code 
